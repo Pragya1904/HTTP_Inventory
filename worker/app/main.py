@@ -10,15 +10,8 @@ _root = Path(__file__).resolve().parent.parent
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-try:
-    from config.settings import Settings
-except ImportError:
-    from worker.config.settings import Settings
-
-try:
-    from app.core.backoff import exponential_backoff
-except ImportError:
-    from worker.app.core.backoff import exponential_backoff
+from app.core.backoff import exponential_backoff
+from config.settings import Settings
 
 SERVICE_NAME = "worker"
 
@@ -44,8 +37,13 @@ async def run_worker() -> None:
         attempt += 1
         _log("mongo_connect_attempt", attempt=attempt, delay=delay)
         try:
+            u, p = settings.database_user, settings.database_password
+            if u and p:
+                uri = f"mongodb://{u}:{p}@{settings.database_host}:{settings.database_port}"
+            else:
+                uri = f"mongodb://{settings.database_host}:{settings.database_port}"
             mongo_client = AsyncIOMotorClient(
-                settings.mongo_uri,
+                uri,
                 serverSelectionTimeoutMS=5000,
             )
             await mongo_client.admin.command("ping")
@@ -69,7 +67,11 @@ async def run_worker() -> None:
         attempt += 1
         _log("rmq_connect_attempt", attempt=attempt, delay=delay)
         try:
-            connection = await aio_pika.connect_robust(settings.rabbitmq_url)
+            url = (
+                f"amqp://{settings.broker_user}:{settings.broker_password}"
+                f"@{settings.broker_host}:{settings.broker_port}/"
+            )
+            connection = await aio_pika.connect_robust(url)
             break
         except Exception as e:
             logger.warning("rmq connect failed: {}", e)
@@ -127,7 +129,7 @@ async def run_worker() -> None:
         pass
     await channel.close()
     await connection.close()
-    mongo_client.close()
+    await mongo_client.close()
     _log("worker_stopped")
 
 

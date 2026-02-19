@@ -4,15 +4,9 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, Request, Response
 from loguru import logger
 
-try:
-    from api.schemas.metadata import MetadataPostRequest, MetadataPostResponse
-except ImportError:
-    from schemas.metadata import MetadataPostRequest, MetadataPostResponse
+from api.publisher.constants import PublisherState
+from api.schemas.metadata import MetadataPostRequest, MetadataPostResponse
 
-try:
-    from api.publisher.constants import PublisherState
-except ImportError:
-    from publisher.constants import PublisherState
 
 metadata_router = APIRouter(prefix="/metadata", tags=["metadata"])
 

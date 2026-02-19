@@ -9,27 +9,11 @@ _root = Path(__file__).resolve().parent.parent
 if str(_root) not in sys.path:
     sys.path.insert(0, str(_root))
 
-try:
-    from config.settings import Settings
-except ImportError:
-    from api.config.settings import Settings
-
-try:
-    from publisher.rabbitmq_publisher import RabbitMQPublisher
-except ImportError:
-    from api.publisher.rabbitmq_publisher import RabbitMQPublisher
-
-try:
-    from infrastructure.database import get_database_connection
-except ImportError:
-    from api.infrastructure.database import get_database_connection
-
-try:
-    from routers.health import router as health_router
-    from routers.metadata import metadata_router
-except ImportError:
-    from api.routers.health import router as health_router
-    from api.routers.metadata import metadata_router
+from api.config.settings import Settings
+from api.infrastructure.database import get_database_connection
+from api.publisher.rabbitmq_publisher import RabbitMQPublisher
+from api.routers.health import router as health_router
+from api.routers.metadata import metadata_router
 
 
 @asynccontextmanager
@@ -38,14 +22,29 @@ async def lifespan(app: FastAPI):
     settings = Settings()
     publisher = RabbitMQPublisher(settings)
     database = get_database_connection(settings)
-    await publisher.connect()
-    await database.connect()
-    app.state.publisher = publisher
-    app.state.database = database
-    yield
-    logger.bind(service_name="api", event="api_stopping").info("")
-    await publisher.close()
-    await database.close()
+    publisher_connected = False
+    database_connected = False
+    try:
+        await publisher.connect()
+        publisher_connected = True
+        try:
+            await database.connect()
+            database_connected = True
+        except Exception as e:
+            await publisher.close()
+            logger.exception("database connect failed: {}", e)
+            raise
+
+        app.state.settings = settings
+        app.state.publisher = publisher
+        app.state.database = database
+        yield
+    finally:
+        logger.bind(service_name="api", event="api_stopping").info("")
+        if publisher_connected:
+            await publisher.close()
+        if database_connected:
+            await database.close()
 
 
 app = FastAPI(

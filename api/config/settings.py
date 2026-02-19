@@ -24,3 +24,5 @@ class Settings(BaseSettings):
     initial_backoff_seconds: float = Field(..., env="INITIAL_BACKOFF_SECONDS")
     max_backoff_seconds: float = Field(..., env="MAX_BACKOFF_SECONDS")
     max_connection_attempts: int = Field(..., env="MAX_CONNECTION_ATTEMPTS")
+
+    readiness_ping_timeout_seconds: float = Field(30.0, env="READINESS_PING_TIMEOUT_SECONDS")

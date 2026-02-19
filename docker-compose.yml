@@ -1,9 +1,22 @@
 services:
   api:
-    build: ./api
+    build: 
+      context: .
+      dockerfile: api/Dockerfile
     ports:
       - "6577:6577"
     depends_on:
+      - rabbitmq
+      - mongo
+    env_file:
+      - .env
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    depends_on:
+      - api
       - rabbitmq
       - mongo
     env_file:
@@ -20,15 +33,15 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${RABBITMQ_PORT_HOST:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT_HOST:-15672}:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
   mongo:
     image: mongo:6
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT_HOST:-27017}:27017"
     volumes:
       - mongo_data:/data/db
 

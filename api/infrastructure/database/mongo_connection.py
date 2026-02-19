@@ -3,17 +3,9 @@ from typing import Any
 from loguru import logger
 from motor.motor_asyncio import AsyncIOMotorClient
 
-try:
-    from api.app.core.backoff import exponential_backoff
-except ImportError:
-    from app.core.backoff import exponential_backoff
-
-try:
-    from api.infrastructure.database.base import DatabaseConnection
-    from api.infrastructure.database.constants import ConnectionState
-except ImportError:
-    from infrastructure.database.base import DatabaseConnection
-    from infrastructure.database.constants import ConnectionState
+from api.app.core.backoff import exponential_backoff
+from api.infrastructure.database.base import DatabaseConnection
+from api.infrastructure.database.constants import ConnectionState
 
 SERVICE_NAME = "api"
 
@@ -77,7 +69,7 @@ class MongoConnection(DatabaseConnection):
 
     async def close(self) -> None:
         if self._client:
-            self._client.close()
+            await self._client.close()
             self._client = None
         self._state = ConnectionState.DISCONNECTED
 

@@ -16,17 +16,9 @@ import aio_pika
 from aio_pika import Message, DeliveryMode
 from loguru import logger
 
-try:
-    from api.publisher.constants import PublisherState
-    from api.publisher.publisher import MessagePublisher
-except ImportError:
-    from publisher.constants import PublisherState
-    from publisher.publisher import MessagePublisher
-
-try:
-    from api.app.core.backoff import exponential_backoff
-except ImportError:
-    from app.core.backoff import exponential_backoff
+from api.app.core.backoff import exponential_backoff
+from api.publisher.constants import PublisherState
+from api.publisher.publisher import MessagePublisher
 
 SERVICE_NAME = "api"
 
@@ -62,7 +54,7 @@ class RabbitMQPublisher(MessagePublisher):
             return
         self._set_state(PublisherState.RECONNECTING)
         _log("broker_disconnect_detected")
-        if self._reconnect_task is None or self._reconnect_task.done() and self._loop:
+        if (self._reconnect_task is None or self._reconnect_task.done()) and self._loop:
             def schedule() -> None:
                 asyncio.create_task(self._reconnect_loop())
             self._loop.call_soon_threadsafe(schedule)
