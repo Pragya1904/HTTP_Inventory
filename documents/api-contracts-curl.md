@@ -2,6 +2,7 @@
 
 Base URL when running locally: `http://localhost:6577`
 
+PostMan Collection Link: https://jyp494515-89996.postman.co/workspace/P-Jy's-Workspace~d7ad867e-1b5d-4764-83f3-51a2297a9c5f/collection/52529563-c7589c56-c53b-46d6-9025-326b46feea01?action=share&creator=52529563
 ---
 
 ## 1. GET /health/live
