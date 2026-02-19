@@ -1,0 +1,37 @@
+services:
+  api:
+    build: ./api
+    ports:
+      - "6577:6577"
+    depends_on:
+      - rabbitmq
+      - mongo
+    env_file:
+      - .env
+
+  # worker:
+  #   build: ./worker
+  #   depends_on:
+  #     - rabbitmq
+  #     - mongo
+  #   env_file:
+  #     - .env
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+  mongo:
+    image: mongo:6
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  rabbitmq_data:
+  mongo_data:
