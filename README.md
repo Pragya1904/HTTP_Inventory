@@ -51,7 +51,7 @@ graph TD
 
 1. **Clone and Configure**
 ```bash
-git clone https://github.com/your-repo/http-inventory.git
+git clone https://github.com/Pragya1904/HTTP_Inventory.git
 cd http-inventory
 cp .env.example .env
 
