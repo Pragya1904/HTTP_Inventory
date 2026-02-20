@@ -2,8 +2,8 @@ import asyncio
 
 import pytest
 
-from api.publisher.constants import PublisherState
-from api.publisher.rabbitmq_publisher import RabbitMQPublisher
+from api.app.infrastructure.messaging.rabbitmq.constants import PublisherState
+from api.app.infrastructure.messaging.rabbitmq.rabbitmq_publisher import RabbitMQPublisher
 
 
 class _FakeChannel:
@@ -48,6 +48,8 @@ class _Settings:
     initial_backoff_seconds = 0.0
     max_backoff_seconds = 0.0
     max_connection_attempts = 1
+    backoff_multiplier = 2.0
+    publish_timeout_seconds = 10.0
 
 
 @pytest.mark.asyncio
@@ -58,7 +60,7 @@ async def test_connect_sets_ready(monkeypatch):
     async def _connect_robust(url):
         return conn
 
-    import api.publisher.rabbitmq_publisher as mod
+    import api.app.infrastructure.messaging.rabbitmq.rabbitmq_publisher as mod
 
     monkeypatch.setattr(mod.aio_pika, "connect_robust", _connect_robust)
     pub = RabbitMQPublisher(_Settings())
@@ -82,7 +84,7 @@ async def test_publish_failure_sets_reconnecting_and_schedules_reconnect(monkeyp
     async def _connect_robust(url):
         return conn
 
-    import api.publisher.rabbitmq_publisher as mod
+    import api.app.infrastructure.messaging.rabbitmq.rabbitmq_publisher as mod
 
     monkeypatch.setattr(mod.aio_pika, "connect_robust", _connect_robust)
     pub = RabbitMQPublisher(_Settings())
@@ -103,7 +105,7 @@ async def test_close_transitions_to_closed(monkeypatch):
     async def _connect_robust(url):
         return conn
 
-    import api.publisher.rabbitmq_publisher as mod
+    import api.app.infrastructure.messaging.rabbitmq.rabbitmq_publisher as mod
 
     monkeypatch.setattr(mod.aio_pika, "connect_robust", _connect_robust)
     pub = RabbitMQPublisher(_Settings())

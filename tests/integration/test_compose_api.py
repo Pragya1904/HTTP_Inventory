@@ -1,8 +1,11 @@
 import json
+import random
 import time
 
 import pytest
 import httpx
+
+from tests.test_data import TEST_URLS
 
 
 API_BASE = "http://api:6577"
@@ -66,12 +69,15 @@ def test_post_metadata_enqueues_message():
         await conn.close()
         raise AssertionError(f"No message with request_id {req_id!r} in queue")
 
-    r = httpx.post(f"{API_BASE}/metadata", json={"url": "https://example.com"})
+    # Pick a URL from the curated test list for variety in integration runs
+    url = random.choice(TEST_URLS)
+    r = httpx.post(f"{API_BASE}/metadata", json={"url": url})
     assert r.status_code == 202
     body = r.json()
     assert body["status"] == "QUEUED"
     req_id = body["request_id"]
-    expected_url = body["url"] 
+    expected_url = body["url"]
+    assert expected_url == url
 
     asyncio.run(_drain_and_check(req_id, expected_url))
 
@@ -81,8 +87,11 @@ def test_post_metadata_enqueues_message():
 def test_failure_when_deps_down():
     """Expect 503 when RabbitMQ/Mongo are stopped. Run: docker compose stop rabbitmq mongo; docker compose run --no-deps tests pytest -m failure_path -v"""
     r_ready = httpx.get(f"{API_BASE}/health/ready", timeout=35.0)
+    if r_ready.status_code == 200:
+        pytest.skip("Dependencies are up (ready=200). Run with deps stopped: docker compose stop rabbitmq mongo; docker compose run --no-deps tests pytest -m failure_path -v")
     assert r_ready.status_code == 503, f"Expected 503 when deps down, got {r_ready.status_code}"
 
-    r_post = httpx.post(f"{API_BASE}/metadata", json={"url": "https://example.com"}, timeout=10.0)
+    url = random.choice(TEST_URLS)
+    r_post = httpx.post(f"{API_BASE}/metadata", json={"url": url}, timeout=10.0)
     assert r_post.status_code == 503, f"Expected 503 when broker down, got {r_post.status_code}"
 

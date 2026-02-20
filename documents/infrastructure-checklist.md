@@ -102,3 +102,18 @@ Execution blueprint status, now including Worker Phase 1 (processing + metadata 
 - **Pending verification:** Section 6 manual runtime checks in Docker environment.
 
 *Update status: ⬜ → ✅ when done and verified.*
+
+---
+
+## Milestone: Worker Metadata Persistence
+
+Status: Completed
+
+- [x] Mongo schema frozen
+- [x] Unique index on URL
+- [x] Index on created_at
+- [x] Atomic upsert logic implemented
+- [x] Retryable failure handling implemented
+- [x] Permanent failure handling implemented
+- [x] Structured persistence logs added
+- [x] Final state verification log added

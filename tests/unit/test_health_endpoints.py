@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from api.publisher.constants import PublisherState
+from api.app.infrastructure.messaging.rabbitmq.constants import PublisherState
 from tests.conftest import FakeDatabase, FakePublisher
 
 
@@ -13,7 +13,7 @@ def test_live_is_always_200(test_app):
 
 def test_ready_503_when_components_missing():
     from fastapi import FastAPI
-    from api.routers.health import router as health_router
+    from api.app.routers.health import health_router
 
     app = FastAPI()
     app.include_router(health_router)
