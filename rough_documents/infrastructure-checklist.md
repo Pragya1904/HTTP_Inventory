@@ -50,7 +50,7 @@ Execution blueprint status, now including Worker Phase 1 (processing + metadata 
 | empty / Invalid URL → 400 | ⬜ | Pydantic `HttpUrl` yields 422 for invalid URL; map to 400 if required |
 | publisher not ready / queue overflow / broker down → 503 | ✅ | |
 | unexpected exception → 500 | ⬜ | Route currently returns 503 on any exception; add 500 for unhandled if desired |
-| GET /metadata?url=... reads DB; enqueues on miss; never blocks | ✅ | 200 COMPLETED/FAILED_PERMANENT; 202 IN_PROGRESS/QUEUED; 503 on publish failure |
+| GET /metadata → 202 placeholder `{ "message": "..." }` | ✅ | |
 
 ---
 
@@ -95,9 +95,9 @@ Execution blueprint status, now including Worker Phase 1 (processing + metadata 
 
 ## Summary
 
-**Scope: API enqueuing + API GET read-through + Worker Phase 1 processing integration.**
+**Scope: API enqueuing + Worker Phase 1 processing integration (no cache, no GET API).**
 
-- **Done (code-level):** API enqueuing and GET read-through are implemented, and Worker section 4 is implemented with fetcher, processing service, Mongo repository, manual ACK/NACK flow, and graceful shutdown path.
+- **Done (code-level):** API enqueuing scope remains complete, and Worker section 4 is implemented with fetcher, processing service, Mongo repository, manual ACK/NACK flow, and graceful shutdown path.
 - **Optional (API contracts):** Invalid URL → 400 (currently 422 via Pydantic); unexpected exception → 500 (currently 503). Can add later if contract demands it.
 - **Pending verification:** Section 6 manual runtime checks in Docker environment.
 
@@ -109,7 +109,7 @@ Execution blueprint status, now including Worker Phase 1 (processing + metadata 
 
 Status: Completed
 
-- [x] Mongo schema defined (includes `processing.last_request_id` by consent)
+- [x] Mongo schema frozen
 - [x] Unique index on URL
 - [x] Index on created_at
 - [x] Atomic upsert logic implemented
