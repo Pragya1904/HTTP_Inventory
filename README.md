@@ -33,8 +33,8 @@ graph TD
 
 | Component | Responsibility |
 | --- | --- |
-| **API Service** | Validates URLs, manages the "read-through" logic, and exposes health probes. |
-| **Worker Service** | Handles the async fetch-retry loop, page source truncation, and status updates. |
+| **API Service** | Validates URLs, reads from System Data, and exposes health probes. |
+| **Worker Service** | Handles the async fetch-retry loop, Persisting metadata in storage and status updates. |
 | **RabbitMQ** | Durable message broker ensuring tasks are not lost during restarts. |
 | **MongoDB** | Document store for metadata, indexed by URL for  retrieval. |
 
