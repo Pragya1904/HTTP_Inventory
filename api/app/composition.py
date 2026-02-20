@@ -9,9 +9,13 @@ selection (e.g. publisher_backend=inmemory) is driven by settings.
 
 from api.app.config.settings import Settings
 from api.app.ports.database_connection import DatabaseConnection
+from api.app.ports.metadata_repository import MetadataRepository
 from api.app.ports.message_publisher import MessagePublisher
 from api.app.infrastructure.messaging.factory import create_publisher
-from api.app.infrastructure.persistence.factory import create_database_connection
+from api.app.infrastructure.persistence.factory import (
+    create_database_connection,
+    create_metadata_repository,
+)
 
 
 class AppDependencies:
@@ -23,10 +27,12 @@ class AppDependencies:
         settings: Settings,
         publisher: MessagePublisher,
         database: DatabaseConnection,
+        metadata_repository: MetadataRepository,
     ) -> None:
         self._settings = settings
         self._publisher = publisher
         self._database = database
+        self._metadata_repository = metadata_repository
         self._publisher_connected = False
         self._database_connected = False
 
@@ -41,6 +47,10 @@ class AppDependencies:
     @property
     def database(self) -> DatabaseConnection:
         return self._database
+
+    @property
+    def metadata_repository(self) -> MetadataRepository:
+        return self._metadata_repository
 
     async def connect(self) -> None:
         await self._publisher.connect()
@@ -69,8 +79,13 @@ def create_app_dependencies(settings: Settings | None = None) -> AppDependencies
     are selected from settings (publisher_backend, database_backend).
     """
     _settings = settings or Settings()
+    publisher = create_publisher(_settings)
+    database = create_database_connection(_settings)
+    repository = create_metadata_repository(_settings, database)
+    
     return AppDependencies(
         settings=_settings,
-        publisher=create_publisher(_settings),
-        database=create_database_connection(_settings),
+        publisher=publisher,
+        database=database,
+        metadata_repository=repository,
     )

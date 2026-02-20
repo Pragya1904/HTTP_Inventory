@@ -1,7 +1,8 @@
+import inspect
 from typing import Any
 
 from loguru import logger
-from motor.motor_asyncio import AsyncIOMotorClient
+from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorCollection
 
 from api.app.config.settings import Settings
 from api.app.core import SERVICE_NAME
@@ -24,6 +25,18 @@ class MongoConnection:
     @property
     def ready(self) -> bool:
         return self._state == ConnectionState.CONNECTED
+
+    @property
+    def client(self) -> AsyncIOMotorClient:
+        if not self._client:
+            raise RuntimeError("db_not_connected")
+        return self._client
+
+    @property
+    def metadata_collection(self) -> AsyncIOMotorCollection:
+        """Mongo collection used for metadata records."""
+        client = self.client
+        return client[self._settings.database_name][self._settings.database_collection]
 
     async def connect(self) -> None:
         self._state = ConnectionState.CONNECTING
@@ -71,6 +84,8 @@ class MongoConnection:
 
     async def close(self) -> None:
         if self._client:
-            await self._client.close()
+            res = self._client.close()
+            if inspect.isawaitable(res):
+                await res
             self._client = None
         self._state = ConnectionState.DISCONNECTED

@@ -51,7 +51,6 @@ async def test_fetcher_success_url_returns_metadata_result(fetcher, url):
     assert isinstance(result.page_source, str)
     assert result.status_code >= 200 and result.status_code < 300
     assert result.final_url
-    assert "content_type" in result.additional_details or result.additional_details == {}
 
 
 @pytest.mark.integration

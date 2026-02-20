@@ -10,8 +10,20 @@ from tests.test_data import TEST_URLS
 
 API_BASE = "http://api:6577"
 RMQ_URL = "amqp://guest:guest@rabbitmq:5672/"
+RMQ_MGMT = "http://guest:guest@rabbitmq:15672"
 QUEUE_NAME = "metadata_queue"
 QUEUE_ARGS = {"x-max-length": 1000, "x-overflow": "reject-publish"}
+
+
+def _queue_consumer_count() -> int | None:
+    """Return consumer_count for metadata_queue from RabbitMQ management API, or None if unavailable."""
+    try:
+        r = httpx.get(f"{RMQ_MGMT}/api/queues/%2F/{QUEUE_NAME}", timeout=5.0)
+        if r.status_code != 200:
+            return None
+        return r.json().get("consumer_count", 0)
+    except Exception:
+        return None
 
 
 def _wait_http(url: str, timeout_s: float = 60.0) -> None:
@@ -45,6 +57,19 @@ def test_api_live_and_ready_endpoints():
 
 @pytest.mark.integration
 def test_post_metadata_enqueues_message():
+    """POST /metadata enqueues a message; we drain the queue to find it. Requires no consumer on the queue
+    (worker must be stopped), otherwise the worker may consume the message before we read it.
+    Run with worker stopped: docker compose stop worker && docker compose run --rm tests pytest tests/integration/test_compose_api.py::test_post_metadata_enqueues_message -v && docker compose start worker
+    Or use scripts/run_integration_queue_test.ps1 (Windows) or scripts/run_integration_queue_test.sh (Linux/macOS).
+    """
+    consumers = _queue_consumer_count()
+    if consumers is not None and consumers > 0:
+        pytest.skip(
+            "Queue has active consumer(s); worker must be stopped so the message stays in the queue. "
+            "Run: docker compose stop worker && docker compose run --rm tests pytest tests/integration/test_compose_api.py::test_post_metadata_enqueues_message -v && docker compose start worker "
+            "(or use scripts/run_integration_queue_test.ps1 / run_integration_queue_test.sh)"
+        )
+
     import aio_pika
     import asyncio
 
@@ -54,7 +79,7 @@ def test_post_metadata_enqueues_message():
         q = await ch.declare_queue(QUEUE_NAME, durable=True, arguments=QUEUE_ARGS)
         
         while True:
-            msg = await q.get(fail=False, timeout=2)
+            msg = await q.get(fail=False, timeout=10)
             if msg is None:
                 break
             payload = json.loads(msg.body.decode())
@@ -79,6 +104,8 @@ def test_post_metadata_enqueues_message():
     expected_url = body["url"]
     assert expected_url == url
 
+    # Allow broker a moment to receive the message (publish is awaited, but delivery can be slightly delayed)
+    time.sleep(1.0)
     asyncio.run(_drain_and_check(req_id, expected_url))
 
 
