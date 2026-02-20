@@ -95,3 +95,13 @@ curl -X GET "http://localhost:6577/metadata?url=https%3A%2F%2Fexample.com"
 | Get metadata   | GET    | /metadata    | query `url=...`           | 200/202 |
 
 Use **Base URL** `http://localhost:6577` (or your API host) and the paths above.
+
+
+# Delivery Guarantees
+
+* Durable RabbitMQ queue
+* Persistent messages
+* Explicit ACK/NACK
+* MAX_RETRIES = 3
+* No silent message loss
+* Single source of truth in MongoDB
