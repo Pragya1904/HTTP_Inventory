@@ -23,11 +23,11 @@ The system is composed of two primary Python services and two infrastructure com
 ```mermaid
 graph TD
     Client[Client] -->|POST/GET| API[API Service - FastAPI]
-    API -->|Read/Write| Mongo[(MongoDB)]
+    API -->|Read| Mongo[(MongoDB)]
     API -->|Enqueue| RMQ[RabbitMQ]
     RMQ -->|Consume| Worker[Worker Service]
     Worker -->|Fetch| Web[Internet]
-    Worker -->|Persist| Mongo
+    Worker -->|Persist/Write| Mongo
 
 ```
 
