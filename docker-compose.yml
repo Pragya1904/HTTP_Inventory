@@ -22,13 +22,15 @@ services:
     env_file:
       - .env
 
-  # worker:
-  #   build: ./worker
-  #   depends_on:
-  #     - rabbitmq
-  #     - mongo
-  #   env_file:
-  #     - .env
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+      - mongo
+    env_file:
+      - .env
 
   rabbitmq:
     image: rabbitmq:3-management

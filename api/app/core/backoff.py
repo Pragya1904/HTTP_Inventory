@@ -1,3 +1,10 @@
+"""Backoff utilities.
+
+Provides an async generator for exponential backoff strategies.
+`exponential_backoff` yields the current delay for the caller to attempt an operation,
+then sleeps for that delay before the next attempt. This allows consumers to easily
+implement retry logic with exponential delays.
+"""
 import asyncio
 from typing import AsyncIterator
 

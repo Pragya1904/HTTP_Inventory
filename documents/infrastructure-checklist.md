@@ -1,6 +1,10 @@
 # Infrastructure checklist — Worker + API
 
-Execution blueprint status. Only infrastructure lifecycle (no metadata fetch, no DB writes).
+Execution blueprint status, now including Worker Phase 1 (processing + metadata fetch + DB persistence).
+
+## Phase Update
+
+- Worker processing + metadata fetch + Mongo repository integration is now in progress.
 
 ---
 
@@ -54,12 +58,15 @@ Execution blueprint status. Only infrastructure lifecycle (no metadata fetch, no
 
 | Item | Status | Notes |
 |------|--------|--------|
-| Mongo connect with backoff | ⬜ | Worker commented out in docker-compose; implement when enabling |
-| RabbitMQ connect with backoff | ⬜ | |
-| Declare queue (idempotent), QoS prefetch=1 | ⬜ | |
-| Start consuming, manual ACK, log message (e.g. URL) | ⬜ | |
-| Log `event=worker_started` | ⬜ | |
-| SIGTERM: stop consuming, wait in-flight, close channel, close Mongo, exit | ⬜ | |
+| Mongo connect with backoff | ✅ | `worker/app/main.py` uses exponential backoff + configurable timeout |
+| RabbitMQ connect with backoff | ✅ | `worker/app/main.py` uses exponential backoff |
+| Declare queue (idempotent), QoS prefetch=1 | ✅ | Queue declare + `set_qos(prefetch_count=settings.prefetch_count)` |
+| Start consuming, manual ACK/NACK, process URL payload | ✅ | `ProcessingService.process_message()` controls ACK/NACK after DB writes |
+| Log `event=worker_started` | ✅ | `worker/app/main.py` |
+| SIGTERM: stop consuming, wait in-flight, close channel, close Mongo, exit | ✅ | `queue.cancel(...)`, processing lock drain, then close resources |
+| Metadata fetcher (headers/cookies/page source with timeouts) | ✅ | `worker/app/services/metadata_fetcher.py` |
+| Mongo repository (upsert/status transitions/retry persistence) | ✅ | `worker/app/repository/mongo_repository.py` |
+| Processing orchestrator (retry policy + delivery guarantees) | ✅ | `worker/app/services/processing_service.py` |
 
 ---
 
@@ -88,10 +95,10 @@ Execution blueprint status. Only infrastructure lifecycle (no metadata fetch, no
 
 ## Summary
 
-**Scope: everything till publisher enqueuing (API only, no Worker).**
+**Scope: API enqueuing + Worker Phase 1 processing integration (no cache, no GET API).**
 
-- **Done (publisher-enqueuing scope):** All of sections 1, 2, 3 (except the two optional items below), and 5. API can start, connect to broker + DB, expose live/ready, accept POST /metadata, enqueue to RabbitMQ with confirm, return 202/503, and log with structured events.
-- **Optional (not required for enqueuing):** Invalid URL → 400 (currently 422 via Pydantic); unexpected exception → 500 (currently 503). Can add later if contract demands it.
-- **Out of scope for this phase:** Worker (section 4); manual verification (section 6) — run when ready.
+- **Done (code-level):** API enqueuing scope remains complete, and Worker section 4 is implemented with fetcher, processing service, Mongo repository, manual ACK/NACK flow, and graceful shutdown path.
+- **Optional (API contracts):** Invalid URL → 400 (currently 422 via Pydantic); unexpected exception → 500 (currently 503). Can add later if contract demands it.
+- **Pending verification:** Section 6 manual runtime checks in Docker environment.
 
 *Update status: ⬜ → ✅ when done and verified.*

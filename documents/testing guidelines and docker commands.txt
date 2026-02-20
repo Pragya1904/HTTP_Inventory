@@ -20,3 +20,7 @@ docker compose run tests pytest -m integration -v
   docker compose run --no-deps tests pytest -m failure_path -v
 
   Then bring deps back: docker compose start rabbitmq mongo
+
+6) worker integration test (message consumed + Mongo persisted metadata):
+
+  docker compose run tests pytest tests/integration/test_worker_integration.py -v
