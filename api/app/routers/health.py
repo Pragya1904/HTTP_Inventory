@@ -15,7 +15,7 @@ def _log(event: str, **kwargs: Any) -> None:
 @health_router.get(
     "/health/live",
     summary="Liveness probe",
-    description="Returns 200 if the API process is running. Use for Kubernetes liveness checks.",
+    description="Returns 200 if the API process is running. Used to confirm the service is running.",
     responses={200: {"description": "Service is alive."}},
 )
 async def live() -> dict:
@@ -25,7 +25,7 @@ async def live() -> dict:
 @health_router.get(
     "/health/ready",
     summary="Readiness probe",
-    description="Returns 200 only when the publisher (RabbitMQ) and database (MongoDB) are connected and ready. Use for Kubernetes readiness checks.",
+    description="Returns 200 only when the publisher (RabbitMQ) and database (MongoDB) are connected and ready. Used to confirm the service is ready to accept requests.",
     responses={
         200: {"description": "Publisher and database are ready."},
         503: {"description": "Publisher or database not ready."},
