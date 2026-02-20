@@ -57,30 +57,15 @@ curl -X POST "http://localhost:6577/metadata" \
 
 ## 4. GET /metadata
 
-Read-through cache: API reads Mongo. If record exists, returns it. If missing, API enqueues a message (same schema as POST) and returns 202.
+Placeholder. Returns 202 with a message.
 
 ```bash
-curl -X GET "http://localhost:6577/metadata?url=https%3A%2F%2Fexample.com"
+curl -X GET "http://localhost:6577/metadata"
 ```
 
-**Example response (202, NOT_FOUND → enqueued):**
+**Example response (202):**
 ```json
-{"status":"QUEUED","url":"https://example.com","request_id":"550e8400-e29b-41d4-a716-446655440000"}
-```
-
-**Example response (202, IN_PROGRESS/RETRY):**
-```json
-{"status":"IN_PROGRESS","url":"https://example.com","request_id":"550e8400-e29b-41d4-a716-446655440000"}
-```
-
-**Example response (200, COMPLETED):**
-```json
-{"status":"COMPLETED","url":"https://example.com","metadata":{"headers":{},"cookies":{},"status_code":200,"page_source":"...","additional_details":{}}}
-```
-
-**Example response (200, FAILED_PERMANENT):**
-```json
-{"status":"FAILED_PERMANENT","url":"https://example.com","error_msg":"...","attempt_number":3}
+{"message": "Processing or retrieval not yet implemented"}
 ```
 
 ---
@@ -92,16 +77,6 @@ curl -X GET "http://localhost:6577/metadata?url=https%3A%2F%2Fexample.com"
 | Liveness       | GET    | /health/live | —                         | 200     |
 | Readiness      | GET    | /health/ready| —                         | 200     |
 | Post metadata  | POST   | /metadata    | `{"url": "https://example.com"}` | 202 |
-| Get metadata   | GET    | /metadata    | query `url=...`           | 200/202 |
+| Get metadata   | GET    | /metadata    | —                         | 202     |
 
 Use **Base URL** `http://localhost:6577` (or your API host) and the paths above.
-
-
-# Delivery Guarantees
-
-* Durable RabbitMQ queue
-* Persistent messages
-* Explicit ACK/NACK
-* MAX_RETRIES = 3
-* No silent message loss
-* Single source of truth in MongoDB
