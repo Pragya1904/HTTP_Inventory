@@ -1,0 +1,97 @@
+# API contracts — curl for Postman
+
+Base URL when running locally: `http://localhost:6577`
+
+PostMan Collection Link: https://jyp494515-89996.postman.co/workspace/P-Jy's-Workspace~d7ad867e-1b5d-4764-83f3-51a2297a9c5f/collection/52529563-c7589c56-c53b-46d6-9025-326b46feea01?action=share&creator=52529563
+---
+
+## 1. GET /health/live
+
+Liveness probe. Always 200 when the process is up.
+
+```bash
+curl -X GET "http://localhost:6577/health/live"
+```
+
+**Example response (200):**
+```json
+{"status":"ok"}
+```
+
+---
+
+## 2. GET /health/ready
+
+Readiness probe. 200 only when publisher is READY and database ping succeeds; otherwise 503.
+
+```bash
+curl -X GET "http://localhost:6577/health/ready"
+```
+
+**Example response (200):** empty body, status 200.
+
+**Example response (503):** body `Not ready` / `Publisher not ready` / `Database not ready`.
+
+---
+
+## 3. POST /metadata
+
+Enqueue a URL for metadata processing. Body must be JSON with a valid `url` (HTTP/HTTPS).
+
+```bash
+curl -X POST "http://localhost:6577/metadata" \
+  -H "Content-Type: application/json" \
+  -d "{\"url\": \"https://example.com\"}"
+```
+
+**Example response (202):**
+```json
+{"status":"QUEUED","url":"https://example.com/","request_id":"550e8400-e29b-41d4-a716-446655440000"}
+```
+
+**Example response (503):** when publisher not ready, queue rejected, or broker down.
+
+**Example response (422):** when body is invalid or `url` is not a valid URL.
+
+---
+
+## 4. GET /metadata
+
+Read-through cache: API reads Mongo. If record exists, returns it. If missing, API enqueues a message (same schema as POST) and returns 202.
+
+```bash
+curl -X GET "http://localhost:6577/metadata?url=https%3A%2F%2Fexample.com"
+```
+
+**Example response (202, NOT_FOUND → enqueued):**
+```json
+{"status":"QUEUED","url":"https://example.com","request_id":"550e8400-e29b-41d4-a716-446655440000"}
+```
+
+**Example response (202, IN_PROGRESS/RETRY):**
+```json
+{"status":"IN_PROGRESS","url":"https://example.com","request_id":"550e8400-e29b-41d4-a716-446655440000"}
+```
+
+**Example response (200, COMPLETED):**
+```json
+{"status":"COMPLETED","url":"https://example.com","metadata":{"headers":{},"cookies":{},"status_code":200,"page_source":"...","additional_details":{}}}
+```
+
+**Example response (200, FAILED_PERMANENT):**
+```json
+{"status":"FAILED_PERMANENT","url":"https://example.com","error_msg":"...","attempt_number":3}
+```
+
+---
+
+## Summary for Postman
+
+| Contract        | Method | Path         | Body (optional)           | Success |
+|----------------|--------|--------------|---------------------------|---------|
+| Liveness       | GET    | /health/live | —                         | 200     |
+| Readiness      | GET    | /health/ready| —                         | 200     |
+| Post metadata  | POST   | /metadata    | `{"url": "https://example.com"}` | 202 |
+| Get metadata   | GET    | /metadata    | query `url=...`           | 200/202 |
+
+Use **Base URL** `http://localhost:6577` (or your API host) and the paths above.

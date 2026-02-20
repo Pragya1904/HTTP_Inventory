@@ -1,0 +1,81 @@
+What you can test now (high level):
+
+- API: health + metadata enqueue flow (unit + integration via docker compose)
+- Worker: message consumption + persistence to Mongo (integration; asserts page_source length / truncation)
+- Worker: ProcessingService retry/failure paths (unit): retryable → nack+requeue, exhaust retries → permanent, non-retryable → immediate permanent, malformed message (no url)
+- Worker: ProcessingService page_source truncation (unit)
+- Worker: Mongo connection/indexes + dummy write/read roundtrip (integration)
+- Worker: HTTP metadata fetcher against curated real URLs (integration; needs internet)
+- Failure paths: readiness / 503 behavior when RabbitMQ/Mongo are down (integration)
+- E2E: half of TEST_URLs via POST /metadata, half via GET /metadata; API, publisher, consumer, DB; step-by-step logs and result summary
+
+---
+
+1) to test a specific test (single node id):
+
+docker compose run --rm tests pytest tests/integration/test_compose_api.py::test_post_metadata_enqueues_message -v --tb=short
+
+   For test_post_metadata_enqueues_message: the worker must be stopped so it does not consume the message
+   before we read it from the queue. Either run with worker stopped, or use the script (worker is stopped
+   before the test and started again after):
+   - Windows: .\scripts\run_integration_queue_test.ps1
+   - Linux/macOS: ./scripts/run_integration_queue_test.sh
+   Or manually: docker compose stop worker && docker compose run --rm tests pytest tests/integration/test_compose_api.py::test_post_metadata_enqueues_message -v && docker compose start worker
+   If the worker is running when you run the test normally, the test will skip with instructions.
+
+2) run all tests:
+
+docker compose run --rm tests pytest -v --tb=short
+
+3) run only unit tests (everything NOT marked integration):
+
+docker compose run --rm tests pytest -m "not integration" -v --tb=short
+
+4) run only integration tests (requires deps running):
+
+docker compose run --rm tests pytest -m integration -v --tb=short
+
+5) failure-path tests (expect 503 when RabbitMQ/Mongo are down). Stop deps first, then run without starting them:
+
+  docker compose stop rabbitmq mongo
+  docker compose run --rm --no-deps tests pytest -m failure_path -v --tb=short
+
+  Then bring deps back: docker compose start rabbitmq mongo
+
+6) API integration suite (enqueue + readiness):
+
+docker compose run --rm tests pytest tests/integration/test_compose_api.py -m integration -v --tb=short
+
+7) worker integration test (message consumed + Mongo persisted metadata; requires RabbitMQ + Mongo):
+
+docker compose run --rm tests pytest tests/integration/test_worker_integration.py -m integration -v --tb=short
+
+8) worker metadata_fetcher integration tests (real HTTP; needs internet):
+
+docker compose run --rm tests pytest tests/integration/test_metadata_fetcher_integration.py -m integration -v --tb=short
+
+9) DB (Mongo) integration tests (ping, collection/indexes, write/read roundtrip):
+
+docker compose run --rm tests pytest tests/integration/test_worker_mongo_repository_integration.py -m integration -v --tb=short
+
+10) E2E metadata (POST + GET): all TEST_URLs split half POST / half GET; worker started in test; logs every step and prints result summary. Use -s to see logs:
+
+docker compose run --rm tests pytest tests/integration/test_e2e_metadata_post_get.py -m integration -v -s --tb=short
+
+11) Worker ProcessingService retry/failure + malformed message (unit):
+
+docker compose run --rm tests pytest tests/unit/test_worker_processing_service_retry_failure.py -m unit -v --tb=short
+
+12) Worker ProcessingService page_source truncation (unit):
+
+docker compose run --rm tests pytest tests/unit/test_worker_processing_service_truncation.py -m unit -v --tb=short
+
+---
+
+Flag meanings (docker compose run / pytest):
+
+  --rm       (docker) Remove the container after it exits. Keeps your system clean.
+  -m         (pytest) Run only tests with the given marker, e.g. -m integration or -m "not integration".
+  -v         (pytest) Verbose: list each test name and result.
+  --tb=short (pytest) Traceback style on failure: short = fewer lines (use --tb=long for full tracebacks).
+  -s         (pytest) Don't capture stdout; use for E2E test so [E2E] step logs and result table are visible.
