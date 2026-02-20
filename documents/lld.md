@@ -8,8 +8,13 @@ This document details the internal architecture, component interactions, and err
 
 The codebase is built on **Clean Architecture** principles, ensuring that the business logic (Domain) remains decoupled from external frameworks (Infrastructure).
 
-### Component Diagram
-![Layered Architecture](images/mermaid_worker_DI_lld.png)
+### Class Diagram
+![Class Diagram](images/class_diagram.png)
+
+### Worker Architecture
+![Worker Architecture](images/mermaid_worker_DI_lld.png)
+
+The Worker composition root (`worker/app/composition.py`) wires concrete implementations to ports. The `ProcessingService` depends on `MetadataFetcher`, `MetadataRepository`, and `MessageConsumer`; infrastructure adapters (httpx, motor, aio-pika) implement these interfaces.
 
 ### Dependency Rules
 
@@ -66,14 +71,19 @@ The worker follows a "Fetch-Update-Ack" cycle.
 2. **Ensure Record:** Upserts a `PENDING` record in MongoDB using `$setOnInsert`.
 3. **Fetch:** Executes the HTTP request via `MetadataFetcher`.
 4. **Handle Outcome:**
-* **Success:** Truncates source if , marks `COMPLETED`, and **ACKs**.
-* **Retryable Error:** (Timeout/5xx) Increments attempt count. If , **NACKs** with `requeue=True`.
+* **Success:** Truncates source if it exceeds `MAX_PAGE_SOURCE_LENGTH`, marks `COMPLETED`, and **ACKs**.
+* **Retryable Error:** (Timeout/5xx) Increments attempt count. If retries remain, **NACKs** with `requeue=True`.
 * **Fatal Error:** Marks `FAILED_PERMANENT` and **ACKs** to remove from queue.
 
 
 
 > [!IMPORTANT]
 > **Retry Policy:** `MAX_RETRIES` is set to 3. Attempts are 0-indexed (0, 1, 2). Once the counter hits 3, the message is discarded to the "Permanent Failure" state.
+
+### Sequence Diagram
+![Message Flow Sequence](images/sequence_diagram.png)
+
+The sequence diagram illustrates the end-to-end flow: Client → API → RabbitMQ → Worker → HTTP fetch → MongoDB, including the Fetch-Update-Ack cycle and status transitions.
 
 ---
 
