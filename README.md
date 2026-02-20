@@ -66,7 +66,9 @@ docker compose up --build
 
 
 3. **Verify**
-* **API:** `http://localhost:6577/docs`
+* **API (Swagger UI):** [http://localhost:6577/docs](http://localhost:6577/docs) — interactive docs; use "Try it out" to send requests.
+* **API (ReDoc):** [http://localhost:6577/redoc](http://localhost:6577/redoc) — readable reference.
+* **OpenAPI JSON:** [http://localhost:6577/openapi.json](http://localhost:6577/openapi.json)
 * **RabbitMQ UI:** `http://localhost:15672` (guest/guest)
 
 

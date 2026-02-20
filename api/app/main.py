@@ -33,8 +33,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="HTTP Metadata Inventory API",
-    version="0.1.0",
+    description="Enqueue URLs for asynchronous metadata processing and retrieval.",
+    version="1.0.0",
     lifespan=lifespan,
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url="/openapi.json",
 )
 
 app.include_router(health_router)

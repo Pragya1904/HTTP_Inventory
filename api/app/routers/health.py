@@ -7,17 +7,30 @@ from loguru import logger
 from api.app.routers.utils import readiness_ping_timeout_seconds
 from api.app.core import SERVICE_NAME
 
-health_router = APIRouter(tags=["health"])
+health_router = APIRouter(tags=["Health"])
 
 def _log(event: str, **kwargs: Any) -> None:
     logger.bind(service_name=SERVICE_NAME, event=event, **kwargs).info("")
 
-@health_router.get("/health/live")
+@health_router.get(
+    "/health/live",
+    summary="Liveness probe",
+    description="Returns 200 if the API process is running. Use for Kubernetes liveness checks.",
+    responses={200: {"description": "Service is alive."}},
+)
 async def live() -> dict:
     return {"status": "ok"}
 
 
-@health_router.get("/health/ready")
+@health_router.get(
+    "/health/ready",
+    summary="Readiness probe",
+    description="Returns 200 only when the publisher (RabbitMQ) and database (MongoDB) are connected and ready. Use for Kubernetes readiness checks.",
+    responses={
+        200: {"description": "Publisher and database are ready."},
+        503: {"description": "Publisher or database not ready."},
+    },
+)
 async def ready(request: Request) -> Response:
     publisher = getattr(request.app.state, "publisher", None)
     database = getattr(request.app.state, "database", None)
