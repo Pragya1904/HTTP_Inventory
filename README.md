@@ -116,19 +116,10 @@ The system is highly configurable via `.env`. Key variables include:
 
 ---
 
-## 🧩 Engineering Principles
-
-### Clean Architecture
-
-We follow the **Ports and Adapters** pattern. The **Domain** layer contains zero infrastructure imports.
-
-* **API Composition Root:** `api/app/composition.py`
-* **Worker Composition Root:** `worker/app/composition.py`
-
 ### Failure Handling
 
 * **Retryable Failures:** `MetadataFetchError` and `TimeoutError` trigger a `nack` with `requeue=True`.
-* **Permanent Failures:** Exhausted retries or 4xx errors mark the record as `FAILED_PERMANENT` and `ack` the message to clear the queue.
+* **Permanent Failures:** Exhausted retries mark the record as `FAILED_PERMANENT` and `ack` the message to clear the queue.
 * **Connectivity:** Both services implement an async reconnection loop with exponential backoff if the Broker or DB goes down.
 
 ---
