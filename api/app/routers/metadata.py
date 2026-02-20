@@ -12,15 +12,34 @@ def _log(event: str, **kwargs: Any) -> None:
     logger.info(f"{event}: {kwargs}")
 
 
-metadata_router = APIRouter(prefix="/metadata", tags=["metadata"])
+metadata_router = APIRouter(prefix="/metadata", tags=["Inventory"])
 
-@metadata_router.post("")
+@metadata_router.post(
+    "",
+    summary="Enqueue URL for metadata processing",
+    description="Submits a URL for asynchronous metadata fetch. The request is enqueued to a worker; returns immediately with 202 and a request_id. Processing happens in the background.",
+    responses={
+        202: {"description": "URL accepted and queued for processing."},
+        422: {"description": "Invalid request body or URL validation failed."},
+        503: {"description": "Publisher or queue unavailable; try again later."},
+    },
+)
 async def post_metadata(request: Request, body: MetadataPostRequest) -> Response:
     url_str = str(body.url)
     return await enqueue_or_503(request, url=url_str)
 
 
-@metadata_router.get("")
+@metadata_router.get(
+    "",
+    summary="Lookup URL metadata",
+    description="Returns the metadata record if it exists (COMPLETED or FAILED_PERMANENT). If the URL is not found, it is enqueued and 202 is returned. If the record is PENDING/IN_PROGRESS, returns 202 without re-enqueuing.",
+    responses={
+        200: {"description": "Metadata found and returned (COMPLETED or FAILED_PERMANENT)."},
+        202: {"description": "URL enqueued or processing in progress."},
+        400: {"description": "Missing or invalid URL query parameter."},
+        503: {"description": "Database or publisher unavailable."},
+    },
+)
 async def get_metadata(request: Request, url: str | None = None) -> Response:
     if not url:
         return Response(status_code=400, content="Missing required query parameter: url")
