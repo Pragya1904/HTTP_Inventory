@@ -98,7 +98,7 @@ The system follows a **Producer-Consumer** pattern decoupled by a message broker
 
 ## 6. Implementation Notes & Constraints
 
-* **No Distributed Transactions:** We prioritize availability. Consistency is managed through idempotent MongoDB updates.
+* **No Distributed Transactions:** We prioritize availability. Consistency is managed through idempotent DB updates.
 * **Bounded Memory:** The system will reject new requests if the queue depth exceeds 1,000 messages, protecting the infrastructure from spikes.
 * **Single-Worker Focus:** While horizontally scalable, the current HLD assumes a single worker instance to maintain strict sequential processing per resource.
 
