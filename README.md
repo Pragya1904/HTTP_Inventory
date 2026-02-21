@@ -1,7 +1,3 @@
-This is a comprehensive and well-structured README. To make it "GitHub-ready," I have refactored it to improve visual hierarchy, added a **Quick Start** section for immediate developer engagement, and polished the technical tables for better scannability.
-
----
-
 # 🌐 HTTP Inventory
 
 **HTTP Inventory** is a high-performance, asynchronous metadata ingestion system. It accepts URLs, fetches comprehensive HTTP metadata (headers, cookies, page source, status code, final URL), and persists the results to a resilient database.
