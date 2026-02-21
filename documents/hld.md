@@ -62,7 +62,7 @@ The system follows a **Producer-Consumer** pattern decoupled by a message broker
 | --- | --- |
 | **At-Least-Once** | Messages are only `ACKed` after successful DB persistence. |
 | **Retry Logic** | Retryable errors (timeouts, 5xx) are requeued up to **3 times**. |
-| **Fatal Errors** | Uncaught exceptions or 4xx errors mark the record as `FAILED_PERMANENT`. |
+| **Fatal Errors** | Uncaught exceptions or errors mark the record as `FAILED_PERMANENT`. |
 | **Connection Loss** | Both API and Worker use exponential backoff (1s → 30s) to reconnect to Mongo/RabbitMQ. |
 
 ---
