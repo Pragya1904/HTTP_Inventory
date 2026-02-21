@@ -9,7 +9,7 @@ This document details the internal architecture, component interactions, and err
 The codebase is built on **Clean Architecture** principles, ensuring that the business logic (Domain) remains decoupled from external frameworks (Infrastructure).
 
 
-### Worker Architecture
+### Base Architecture
 ![Worker Architecture](images/mermaid_worker_DI_lld.png)
 
 The Worker composition root (`worker/app/composition.py`) wires concrete implementations to ports. The `ProcessingService` depends on `MetadataFetcher`, `MetadataRepository`, and `MessageConsumer`; infrastructure adapters (httpx, motor, aio-pika) implement these interfaces.
