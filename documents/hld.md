@@ -88,6 +88,7 @@ The system follows a **Producer-Consumer** pattern decoupled by a message broker
     "error_msg": null,
     "last_request_id": "uuid-v4"
   },
+  "additional_details": null,
   "updated_at": "2026-02-21T03:17:37Z",
   "created_at": "2026-02-21T03:17:37Z"
 }
