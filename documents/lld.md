@@ -8,8 +8,6 @@ This document details the internal architecture, component interactions, and err
 
 The codebase is built on **Clean Architecture** principles, ensuring that the business logic (Domain) remains decoupled from external frameworks (Infrastructure).
 
-### Class Diagram
-![Class Diagram](images/class_diagram.png)
 
 ### Worker Architecture
 ![Worker Architecture](images/mermaid_worker_DI_lld.png)
