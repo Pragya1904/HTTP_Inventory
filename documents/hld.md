@@ -73,20 +73,23 @@ The system follows a **Producer-Consumer** pattern decoupled by a message broker
 
 ```json
 {
+  "id": 1,
   "url": "https://example.com",
   "status": "COMPLETED",
   "metadata": {
     "status_code": 200,
     "headers": { ... },
     "page_source": "<html>...</html>",
-    "final_url": "https://example.com/"
+    "final_url": "https://example.com/",
+    "additional_details": {}
   },
   "processing": {
     "attempt_number": 1,
     "error_msg": null,
     "last_request_id": "uuid-v4"
   },
-  "updated_at": "2026-02-21T03:17:37Z"
+  "updated_at": "2026-02-21T03:17:37Z",
+  "created_at": "2026-02-21T03:17:37Z"
 }
 
 ```
